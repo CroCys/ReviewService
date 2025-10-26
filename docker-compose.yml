@@ -1,42 +1,24 @@
 services:
-  review_postgres:
-    image: postgres:latest
-    container_name: review_postgres
+  postgres:
+    image: postgres:18
+    container_name: review_service_postgres
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: ggD3v1c3
-      POSTGRES_DB: reviews_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reviews
     ports:
       - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ggdevice_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reviews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
-
-  zookeeper:
-    image: bitnami/zookeeper:latest
-    container_name: review_zookeeper
-    ports:
-      - "32181:2181"
-    networks:
-      - ggdevice_network
-
-  kafka:
-    image: bitnami/kafka:latest
-    container_name: review_kafka
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: review_zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-    ports:
-      - "29092:29092"
-    networks:
-      - ggdevice_network
-    depends_on:
-      - review_zookeeper
 
   app:
     build: .
@@ -44,16 +26,30 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - review_postgres
-      - kafka
+      postgres:
+        condition: service_healthy
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reviews
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - app_logs:/var/logs
     networks:
       - ggdevice_network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: no
 
 volumes:
   postgres_data:
+    driver: local
+  app_logs:
+    driver: local
 
 networks:
   ggdevice_network:

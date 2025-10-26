@@ -94,10 +94,16 @@
             <version>${mapstruct.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.vadim</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>app</finalName>
+        <finalName>review-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

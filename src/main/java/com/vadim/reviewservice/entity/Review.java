@@ -21,37 +21,44 @@ public class Review {
     private Long id;
 
     @NotNull
-    private Long deviceId; // foreign key к device (внешний сервис)
+    private Long deviceId;
 
     @NotNull
-    private Long userId;   // foreign key к user (внешний сервис)
+    private Long userId;
 
     @Min(1)
     @Max(5)
-    private int buildQuality;
+    private Integer buildQuality;
 
     @Min(1)
     @Max(5)
-    private int ergonomics;
+    private Integer ergonomics;
 
     @Min(1)
     @Max(5)
-    private int performance;
+    private Integer performance;
 
     @Min(1)
     @Max(5)
-    private int features;
+    private Integer features;
 
     @Min(1)
     @Max(5)
-    private int design;
+    private Integer design;
 
-    @DecimalMin("0.0")
-    @DecimalMax("5.0")
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "5.0")
+    @Column(precision = 2, scale = 1)
     private BigDecimal reviewAverage;
 
     public void calculateReviewAverage() {
-        this.reviewAverage = BigDecimal.valueOf((buildQuality + ergonomics + performance + features + design) / 5.0)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal sum = BigDecimal.valueOf(buildQuality)
+                .add(BigDecimal.valueOf(ergonomics))
+                .add(BigDecimal.valueOf(performance))
+                .add(BigDecimal.valueOf(features))
+                .add(BigDecimal.valueOf(design));
+
+        this.reviewAverage = sum
+                .divide(BigDecimal.valueOf(5), 1, RoundingMode.HALF_UP);
     }
 }

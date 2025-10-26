@@ -1,7 +1,9 @@
 package com.vadim.reviewservice.controller;
 
+import com.vadim.kafka.dto.RatingUpdateEvent;
 import com.vadim.reviewservice.dto.ReviewRequestDTO;
 import com.vadim.reviewservice.dto.ReviewResponseDTO;
+import com.vadim.reviewservice.service.RatingProducer;
 import com.vadim.reviewservice.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,12 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final RatingProducer ratingProducer;
 
     @GetMapping("/getAll")
     public ResponseEntity<Page<ReviewResponseDTO>> getAllReviews(Pageable pageable) {
@@ -33,6 +38,9 @@ public class ReviewController {
     @PostMapping("/create")
     public ResponseEntity<ReviewResponseDTO> createReview(@Valid @RequestBody ReviewRequestDTO reviewRequestDTO) {
         ReviewResponseDTO savedReview = reviewService.createReview(reviewRequestDTO);
+        BigDecimal avg = reviewService.getAvgRating(savedReview.getDeviceId());
+        RatingUpdateEvent updateEvent = new RatingUpdateEvent(savedReview.getDeviceId(), avg);
+        ratingProducer.sendRatingUpdate(updateEvent);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedReview);
     }
 

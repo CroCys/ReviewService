@@ -5,36 +5,20 @@ spring:
   application:
     name: Review Service
 
-  # Конфигурация источника данных
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${REVIEW_DB_URL}
+    username: ${REVIEW_DB_USERNAME}
+    password: ${REVIEW_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  # Конфигурация JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: none  # В prod рекомендуется использовать ручные миграции
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  # Конфигурация Kafka
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
-    consumer:
-      group-id: review-service-consumers
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-# Настройки логирования
 logging:
   level:
     vadim: INFO

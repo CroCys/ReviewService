@@ -6,16 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Size
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequestDTO {
 
     @NotNull
-    private Long deviceId; // foreign key к device (внешний сервис)
+    private Long deviceId;
 
     @NotNull
-    private Long userId;   // foreign key к user (внешний сервис)
+    private Long userId;
 
     @Min(1)
     @Max(5)

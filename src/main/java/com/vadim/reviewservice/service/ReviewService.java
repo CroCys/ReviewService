@@ -11,13 +11,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ReviewMapper reviewMapper;
-    private final RatingKafkaProducer ratingKafkaProducer;
 
     public Page<ReviewResponseDTO> getAllReviews(Pageable pageable) {
         return reviewRepository.findAll(pageable).map(reviewMapper::toDto);
@@ -29,11 +32,22 @@ public class ReviewService {
                 .orElseThrow(() -> new ReviewNotFoundException("Review not found with id " + id));
     }
 
+    public BigDecimal getAvgRating(Long deviceId) {
+        List<BigDecimal> avg = reviewRepository.getAvgRatingByDeviceId(deviceId);
+
+        if (avg == null || avg.isEmpty()) {
+            return BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal sum = avg.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return sum.divide(BigDecimal.valueOf(avg.size()), 1, RoundingMode.HALF_UP);
+    }
+
     public ReviewResponseDTO createReview(ReviewRequestDTO reviewRequestDTO) {
         Review review = reviewMapper.toEntity(reviewRequestDTO);
         review.calculateReviewAverage();
         review = reviewRepository.save(review);
-        ratingKafkaProducer.sendRating(review.getDeviceId(), review.getReviewAverage());
         return reviewMapper.toDto(review);
     }
 
